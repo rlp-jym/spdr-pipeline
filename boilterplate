@@ -58,10 +58,9 @@ volumes:
   spdr_etfs_postgres_data:
   pgadmin_data:
 
-
 ### cleanup
 
-docker compose down -v
+docker compose down
 docker container prune
 docker image prune -a
 docker volume prune

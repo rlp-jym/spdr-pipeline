@@ -93,20 +93,20 @@ def run_pipeline(period):
 
     df_metadata_extended.head(n=0).to_sql(
         'spdr_etfs_meta', engine, 
-        if_exists='replace', index=False
+        if_exists='replace', #index=False
     )
     df_metadata_extended.to_sql(
         'spdr_etfs_meta', engine, 
-        if_exists='append', index=False
+        if_exists='append', #index=False
     )
 
     df_price_long.head(n=0).to_sql(
         'spdr_etfs_price', engine, 
-        if_exists='replace', index=False
+        if_exists='replace', #index=False
     )
     df_price_long.to_sql(
         'spdr_etfs_price', engine, 
-        if_exists='append', index=False, 
+        if_exists='append', #index=False
         chunksize=10000
     )
 
