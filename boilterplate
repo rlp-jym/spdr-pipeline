@@ -1,0 +1,68 @@
+# templates
+
+## jupyter
+
+uv run jupyter nbconvert --to=script pipeline.ipynb
+
+## dockerfile
+
+FROM python:3.12.11-slim
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/
+WORKDIR /pipeline
+ENV PATH="/pipeline/.venv/bin:$PATH"
+COPY pyproject.toml uv.lock .python-version ./
+RUN uv sync --locked
+COPY pipeline.py pipeline.py
+ENTRYPOINT ["uv", "run", "python", "pipeline.py"]
+
+## postgres docker
+
+docker run -it --rm \
+  -e POSTGRES_USER="macro" \
+  -e POSTGRES_PASSWORD="macro" \
+  -e POSTGRES_DB="spdr_etfs" \
+  -v spdr_etfs_postgres_data:/var/lib/postgresql \
+  -p 5432:5432 \
+  postgres:18
+
+## pgcli
+
+uv run pgcli -h localhost -p 5432 -u macro -d spdr_etfs
+\pset pager off
+
+## docker compose (postgres + pgadmin)
+
+services:
+  pgdatabase:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: "macro"
+      POSTGRES_PASSWORD: "macro"
+      POSTGRES_DB: "spdr_etfs"
+    volumes:
+      - "spdr_etfs_postgres_data:/var/lib/postgresql/data"
+    ports:
+      - "5432:5432"
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "macro@macro.com"
+      PGADMIN_DEFAULT_PASSWORD: "macro"
+    volumes:
+      - "pgadmin_data:/var/lib/pgadmin"
+    ports:
+      - "8085:80"
+
+volumes:
+  spdr_etfs_postgres_data:
+  pgadmin_data:
+
+
+### cleanup
+
+docker compose down -v
+docker container prune
+docker image prune -a
+docker volume prune
+docker network prune

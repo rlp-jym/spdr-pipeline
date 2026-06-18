@@ -1,0 +1,25 @@
+services:
+  pgdatabase:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: "macro"
+      POSTGRES_PASSWORD: "macro"
+      POSTGRES_DB: "spdr_etfs"
+    volumes:
+      - "spdr_etfs_postgres_data:/var/lib/postgresql/data"
+    ports:
+      - "5432:5432"
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "macro@macro.com"
+      PGADMIN_DEFAULT_PASSWORD: "macro"
+    volumes:
+      - "pgadmin_data:/var/lib/pgadmin"
+    ports:
+      - "8085:80"
+
+volumes:
+  spdr_etfs_postgres_data:
+  pgadmin_data:
