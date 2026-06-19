@@ -23,7 +23,7 @@ def run_pipeline(period):
     df_price.dropna(inplace=True)
     df_price = df_price.reset_index()
     df_price_long = df_price.melt(id_vars=['Date'], var_name='symbol', value_name='price')
-    df_price_long = df_price_long.sort_values(['Date', 'symbol']).reset_index(drop=True)
+    df_price_long = df_price_long.sort_values(['Date', 'symbol']).reset_index(drop=True).rename(columns={'Date': 'date', 'price': 'close'})
 
     # 2. Download Metadata
     metadata_list = []
