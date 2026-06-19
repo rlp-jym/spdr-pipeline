@@ -1,0 +1,24 @@
+name: SPDR ETF Pipeline
+
+on:
+  schedule:
+    - cron: "0 6,12,18,0 * * 1-5"  # 6AM, 12PM, 6PM, 12AM UTC weekdays
+  workflow_dispatch:
+
+jobs:
+  run_pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync
+        working-directory: pipeline
+
+      - name: Run pipeline
+        run: uv run python pipeline.py
+        working-directory: pipeline
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
