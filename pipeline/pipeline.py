@@ -1,3 +1,5 @@
+import os
+import time
 import click
 import yfinance as yf
 import pandas as pd
@@ -6,7 +8,7 @@ from sqlalchemy import create_engine
 
 @click.command()
 @click.option(
-    '--period', default='2026-01-01', help='Start date (YYYY-MM-DD)'
+    '--period', default='1800-01-01', help='Start date (YYYY-MM-DD)'
 )
 
 def run_pipeline(period):
@@ -34,7 +36,7 @@ def run_pipeline(period):
                 'symbol': symbol,
                 'name': info.get('longName') or info.get('shortName') or 'N/A',
                 'aum': info.get('totalAssets', 0),
-                'div_yield': info.get('yield', 0) * 100,
+                'div_yield': (info.get('yield') or 0) * 100,
             })
         except Exception as e:
             print(f"Error fetching {symbol}: {e}")
@@ -89,7 +91,10 @@ def run_pipeline(period):
     """).fetchdf()
 
     # 5. Export to Postgres
-    engine = create_engine('postgresql+psycopg://macro:macro@localhost:5432/spdr_etfs')
+    db_url = os.environ.get(
+        "DATABASE_URL","postgresql+psycopg://spdr:spdr@localhost:5432/spdr_etfs").replace(
+        "postgresql://", "postgresql+psycopg://")
+    engine = create_engine(db_url)
 
     df_metadata_extended.head(n=0).to_sql(
         'spdr_etfs_meta', engine, 
@@ -107,8 +112,8 @@ def run_pipeline(period):
     df_price_long.to_sql(
         'spdr_etfs_price', engine, 
         if_exists='append', #index=False
-        chunksize=10000
+        chunksize=1000
     )
 
 if __name__ == '__main__':
-    run_pipeline()
+    run_pipeline(standalone_mode=False)

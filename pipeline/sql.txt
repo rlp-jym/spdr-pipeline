@@ -1,0 +1,90 @@
+WITH
+spdr_chg AS (
+    SELECT date,
+           symbol,
+           close,
+           ((close / LAG(close, 1) OVER (PARTITION BY symbol ORDER BY date)) - 1) * 100 AS chg
+    FROM spdr_etfs_price
+),
+
+spdr_avg AS (
+    SELECT *,
+           AVG(CASE WHEN chg > 0 THEN chg ELSE 0 END) OVER w AS avg_gain,
+           AVG(CASE WHEN chg < 0 THEN -chg ELSE 0 END) OVER w AS avg_loss
+    FROM spdr_chg
+    WINDOW w AS (PARTITION BY symbol ORDER BY date ROWS 64 PRECEDING)
+),
+
+spdr_rsi AS (
+    SELECT *,
+           CASE
+			    WHEN avg_gain IS NULL AND avg_loss IS NULL THEN 0 
+			    WHEN avg_gain = 0 AND avg_loss = 0 THEN 50        
+			    WHEN avg_loss = 0 THEN 100                        
+			    WHEN avg_gain = 0 THEN 0                          
+			    ELSE 100 - 100 / (1 + (avg_gain / avg_loss))
+           END AS rsi
+    FROM spdr_avg
+),
+
+spdr_breadth AS (
+    SELECT *,
+		AVG(rsi) OVER (PARTITION BY date) AS rsi_breadth,
+		DENSE_RANK() OVER (PARTITION BY date ORDER BY rsi DESC) AS rsi_rank,
+		((rsi / AVG(rsi) OVER (PARTITION BY date)) - 1) * 100 AS rsi_premium
+    FROM spdr_rsi
+),
+
+spdr_dist AS (
+	SELECT CASE
+            WHEN rsi_breadth >= 95 THEN '95-100'
+            WHEN rsi_breadth >= 90 THEN '90-95'
+            WHEN rsi_breadth >= 85 THEN '85-90'
+            WHEN rsi_breadth >= 80 THEN '80-85'
+            WHEN rsi_breadth >= 75 THEN '75-80'
+            WHEN rsi_breadth >= 70 THEN '70-75'
+            WHEN rsi_breadth >= 65 THEN '65-70'
+            WHEN rsi_breadth >= 60 THEN '60-65'
+            WHEN rsi_breadth >= 55 THEN '55-60'
+            WHEN rsi_breadth >= 50 THEN '50-55'
+            WHEN rsi_breadth >= 45 THEN '45-50'
+            WHEN rsi_breadth >= 40 THEN '40-45'
+            WHEN rsi_breadth >= 35 THEN '35-40'
+            WHEN rsi_breadth >= 30 THEN '30-35'
+            WHEN rsi_breadth >= 25 THEN '25-30'
+            WHEN rsi_breadth >= 20 THEN '20-25'
+            WHEN rsi_breadth >= 15 THEN '15-20'
+            WHEN rsi_breadth >= 10 THEN '10-15'
+            WHEN rsi_breadth >= 5  THEN '5-10'
+            ELSE '0-5'
+			END AS category,
+		COUNT(*) AS Count
+    FROM spdr_breadth
+	GROUP BY category
+)
+
+-- SELECT 
+-- 	date::DATE, 
+-- 	symbol,
+-- 	ROUND(rsi::NUMERIC, 2) AS rsi,
+-- 	ROUND(rsi_breadth::NUMERIC, 2) AS breadth,
+-- 	ROUND(rsi_premium::NUMERIC, 2) AS premium,
+-- 	rsi_rank AS rank
+-- FROM spdr_breadth
+-- WHERE rsi_rank NOT BETWEEN 4 AND 26
+-- ORDER BY date ASC, rsi DESC
+
+-- SELECT 
+--     DISTINCT date::DATE,
+--     ROUND((rsi_breadth-50)::NUMERIC, 2) AS breadth
+-- FROM spdr_breadth
+-- ORDER BY date ASC
+
+SELECT 
+    category,
+    Count,
+    ROUND((Count * 100.0 / SUM(Count) OVER ()), 2) AS distribution
+FROM spdr_dist
+ORDER BY category ASC
+
+;

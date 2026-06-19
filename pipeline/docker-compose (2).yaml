@@ -9,16 +9,8 @@ volumes:
     driver: local
 
 services:
-  pipeline:
-    build: .
-    depends_on:
-      pgdatabase:
-        condition: service_healthy
-    environment:
-      - DATABASE_URL=postgresql://spdr:spdr@pgdatabase:5432/spdr_etfs
-
   pgdatabase:
-    image: postgres:17
+    image: postgres:18
     environment:
       POSTGRES_USER: spdr
       POSTGRES_PASSWORD: spdr
@@ -27,11 +19,9 @@ services:
       - "5432:5432"
     volumes:
       - spdr_etfs_postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U spdr -d spdr_etfs"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    depends_on:
+      kestra:
+        condition: service_started
 
   pgadmin:
     image: dpage/pgadmin4
@@ -45,9 +35,9 @@ services:
         condition: service_started
 
   kestra_postgres:
-    image: postgres:17
+    image: postgres:18
     volumes:
-      - kestra_postgres_data:/var/lib/postgresql/data
+      - kestra_postgres_data:/var/lib/postgresql
     environment:
       POSTGRES_DB: kestra
       POSTGRES_USER: kestra
@@ -60,7 +50,7 @@ services:
 
   kestra:
     image: kestra/kestra:v1.1
-    pull_policy: if_not_present
+    pull_policy: if_not_present  
     user: "root"
     command: server standalone
     volumes:
@@ -97,4 +87,5 @@ services:
       - "8081:8081"
     depends_on:
       kestra_postgres:
-        condition: service_healthy
+        condition: service_healthy  
+    
