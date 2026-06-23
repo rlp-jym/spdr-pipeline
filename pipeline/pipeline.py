@@ -1,5 +1,4 @@
 import os
-import time
 import click
 import yfinance as yf
 import pandas as pd
@@ -74,7 +73,7 @@ def run_pipeline(period):
     df_top_sector = pd.DataFrame(sector_weight)
 
     # 4. Combine Metadata and Top Sectors
-    df_metadata_extended = duckdb.sql(f"""
+    df_metadata_extended = duckdb.sql("""
     SELECT
         a.symbol, name, 
         ROUND(TRY_CAST(aum AS BIGINT) / 1e9, 2) AS aum_bn,
