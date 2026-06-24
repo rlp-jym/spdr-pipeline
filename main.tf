@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     google = {
-      source = "hashicorp/google"
+      source  = "hashicorp/google"
       version = "5.6.0"
     }
   }
@@ -9,13 +9,12 @@ terraform {
 
 provider "google" {
   project = var.project_name
-  region = var.provider_region
+  region  = var.provider_region
 }
 
-
 resource "google_storage_bucket" "spdr-etfs" {
-  name = var.bucket_name
-  location = var.resource_location
+  name          = var.bucket_name
+  location      = var.resource_location
   force_destroy = true
 
   lifecycle_rule {
@@ -29,7 +28,7 @@ resource "google_storage_bucket" "spdr-etfs" {
 }
 
 resource "google_bigquery_dataset" "spdr-etfs" {
-  dataset_id = var.dataset_id
-  location = var.resource_location
+  dataset_id                 = var.dataset_id
+  location                   = var.resource_location
   delete_contents_on_destroy = false
 }

@@ -9,8 +9,9 @@ volumes:
     driver: local
 
 services:
-  pipeline:
+  spdr-pipeline:
     build: .
+    container_name: spdr-pipeline
     depends_on:
       pgdatabase:
         condition: service_healthy
