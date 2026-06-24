@@ -4,5 +4,5 @@ WORKDIR /pipeline
 ENV PATH="/pipeline/.venv/bin:$PATH"
 COPY pyproject.toml uv.lock .python-version ./
 RUN uv sync --locked --no-cache
-COPY pipeline.py pipeline.py
-ENTRYPOINT ["uv", "run", "python", "pipeline.py"]
+COPY spdr_pipeline.py spdr_pipeline.py
+ENTRYPOINT ["uv", "run", "python", "spdr_pipeline.py"]

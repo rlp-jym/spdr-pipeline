@@ -91,7 +91,7 @@ def run_pipeline(period):
 
     # 5. Export to Postgres
     db_url = os.environ.get(
-        "DATABASE_URL","postgresql+psycopg://spdr:spdr@localhost:5432/spdr_etfs").replace(
+        "DATABASE_URL","postgresql+psycopg://spdr:spdr@172.17.0.1:5432/spdr_etfs").replace(
         "postgresql://", "postgresql+psycopg://")
     engine = create_engine(db_url)
 
