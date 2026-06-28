@@ -25,7 +25,8 @@ retry_pause = 5
 etfs = [
     'XLC', 'XLY', 'XLP', 'XLE', 'XLF', 'XLV', 'XLI', 'XLB', 'XLRE', 'XAR',
     'KBE', 'XBI', 'KCE', 'XHE', 'XHS', 'XHB', 'KIE', 'XME', 'XES', 'XOP', 
-    'XPH', 'KRE', 'XRT', 'XSD', 'XSW', 'XTL', 'XTN', 'XLK', 'XLU', 'SPY'
+    'XPH', 'KRE', 'XRT', 'XSD', 'XSW', 'XTL', 'XTN', 'XLK', 'XLU',
+    'SPY'
 ]
 
 def download_price(ticker, path):
@@ -70,11 +71,11 @@ def download_holdings(ticker, path):
     holdings.insert(0, 'etf', ticker)
     holdings.to_parquet(f'{path}/{ticker}_holdings.parquet')
 
-def download_weightings(ticker, path):
+def download_weighting(ticker, path):
 
     for attempt in range(retries):
         try:
-            sectors = pd.DataFrame(pd.Series(yf.Ticker(ticker).funds_data.sector_weightings)).reset_index()
+            sectors = pd.DataFrame(pd.Series(yf.Ticker(ticker).funds_data.sector_weighting)).reset_index()
         except Exception as e:
             if attempt == 2:
                 print(f"{ticker} failed: {e}")
@@ -100,9 +101,9 @@ for ticker in tqdm(etfs):
 print('     Downloading holdings...')
 for ticker in tqdm(etfs):
     download_holdings(ticker, path)
-print('     Downloading weightings...')
+print('     Downloading weighting...')
 for ticker in tqdm(etfs):
-    download_weightings(ticker, path)
+    download_weighting(ticker, path)
 
 
 print('\nConstituents:\n')
@@ -125,4 +126,4 @@ for ticker in tqdm(positions):
 
 
 print(f"\nDone in {time.time()-start_time:.2f}s")
-input("Press any key to exit.")
+input("\nPress any key to exit.")
