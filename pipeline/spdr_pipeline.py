@@ -50,6 +50,8 @@ etfs = [
 ]
 
 # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # #
 
 def download_holdings(ticker, path):
     for attempt in range(retries):
@@ -114,28 +116,28 @@ def download_financials(ticker, path):
     for attempt in range(retries):
         try:
             ttm_income = yf.Ticker(ticker).ttm_income_stmt.T
-            ttm_income.insert(0, 'symbol', ticker)
             ttm_income.reset_index()
+            ttm_income.insert(0, 'symbol', ticker)
             ttm_income.to_parquet(f'{path}/{ticker.lower()}_ttm_income_financial.parquet')
             ttm_cashflow = yf.Ticker(ticker).ttm_cashflow.T
-            ttm_cashflow.insert(0, 'symbol', ticker)
             ttm_cashflow.reset_index()
+            ttm_cashflow.insert(0, 'symbol', ticker)
             ttm_cashflow.to_parquet(f'{path}/{ticker.lower()}_ttm_cashflow_financial.parquet')
             qtr_income = yf.Ticker(ticker).quarterly_income_stmt.T
-            qtr_income.insert(0, 'symbol', ticker)
             qtr_income.reset_index()
+            qtr_income.insert(0, 'symbol', ticker)
             qtr_income.to_parquet(f'{path}/{ticker.lower()}_qtr_income_financial.parquet')
             qtr_cashflow = yf.Ticker(ticker).quarterly_cashflow.T
-            qtr_cashflow.insert(0, 'symbol', ticker)
             qtr_cashflow.reset_index()
+            qtr_cashflow.insert(0, 'symbol', ticker)
             qtr_cashflow.to_parquet(f'{path}/{ticker.lower()}_qtr_cashflow_financial.parquet')
             qtr_assets = yf.Ticker(ticker).quarterly_balance_sheet.T
-            qtr_assets.insert(0, 'symbol', ticker)
             qtr_assets.reset_index()
+            qtr_assets.insert(0, 'symbol', ticker)
             qtr_assets.to_parquet(f'{path}/{ticker.lower()}_qtr_assets_financial.parquet')
             dates = yf.Ticker(ticker).earnings_dates.T
-            dates.insert(0, 'symbol', ticker)
             dates.reset_index()
+            dates.insert(0, 'symbol', ticker)
             dates.to_parquet(f'{path}/{ticker.lower()}_release_dates_financial.parquet')
             break
         except Exception as e:
@@ -175,11 +177,14 @@ def upload_many_to_gcs(files, bucket_name):
             executor.submit(upload_to_gcs, local_path, bucket_name, blob_name)
 
 # # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # #
 print('SPDR PIPELINE\n')
+
 print('Composites:')
 
 # # #
-print('\n     Downloading holdings')
+print('\n\tDownloading holdings')
 path = dir_holdings
 for ticker in tqdm(etfs):
     download_holdings(ticker, path)
@@ -194,7 +199,7 @@ duckdb.sql(f"""
 upload_to_gcs(file_name, bucket_name, file_name)
 
 # # #
-print('\n     Downloading price')
+print('\n\tDownloading price')
 path = dir_composites
 for ticker in tqdm(etfs):
     download_price(ticker, path, '1h', '2y')  
@@ -212,7 +217,7 @@ for tf in ('1h', '1d', '1wk'):
     upload_to_gcs(file_name, bucket_name, file_name)
 
 # # #
-print('\n     Downloading metadata')
+print('\n\tDownloading metadata')
 path = dir_composites
 for ticker in tqdm(etfs):
     download_metadata(ticker, path)
@@ -227,13 +232,13 @@ duckdb.sql(f"""
 upload_to_gcs(file_name, bucket_name, file_name)
 
 # # #
-print('\n     Downloading option chain')
+print('\n\tDownloading option chain')
 path = dir_options_comp
 for ticker in tqdm(etfs):
     download_options(ticker, path)
 
 for opt in ('call', 'put'):
-    file_name = f'{dir_uploads}/comp_options_{opt}s.parquet'
+    file_name = f'{dir_uploads}/comp_options_{opt}s_{today}.parquet'
     duckdb.sql(f"""
         copy (
             select *
@@ -242,6 +247,8 @@ for opt in ('call', 'put'):
     """)
     upload_to_gcs(file_name, bucket_name, file_name)
 
+# # # # # # # # # # # # # # # # # # # #
+# # # # # # # # # # # # # # # # # # # #
 # # # # # # # # # # # # # # # # # # # #
 print('\nConstituents:')
 
@@ -268,7 +275,7 @@ get_uniques_ssga = duckdb.sql(f"""
 uniques = get_uniques_ssga['ticker'].tolist()
 
 # # #
-print('\n     Downloading price')
+print('\n\tDownloading price')
 path = dir_constituents
 for ticker in tqdm(uniques):
     download_price(ticker, path, '1h', '2y')  
@@ -289,7 +296,7 @@ for tf in ('1h', '1d', '1wk'):
     upload_to_gcs(file_name, bucket_name, file_name)
 
 # # #
-print('\n     Downloading metadata')
+print('\n\tDownloading metadata')
 path = dir_constituents
 for ticker in tqdm(uniques):
     download_metadata(ticker, path)
@@ -304,7 +311,7 @@ duckdb.sql(f"""
 upload_to_gcs(file_name, bucket_name, file_name)
 
 # # #
-print('\n     Downloading option chain')
+print('\n\tDownloading option chain')
 path = dir_options_consti
 for ticker in tqdm(uniques):
     download_options(ticker, path)
@@ -320,7 +327,7 @@ for opt in ('call', 'put'):
     upload_to_gcs(file_name, bucket_name, file_name)
 
 # # #
-print('\n     Downloading financials')
+print('\n\tDownloading financials')
 path = dir_constituents
 for ticker in tqdm(uniques):
     download_financials(ticker, path)
